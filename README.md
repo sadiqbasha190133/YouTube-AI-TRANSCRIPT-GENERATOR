@@ -13,7 +13,7 @@ This will help greatly for the students to get the important points from the vid
 
 ![text generated page](screenshots/text_generated_page.png)
 
-![all blog posts](screenshots/all_blog_posts.png)
+![saved posts](screenshots/all_blog_posts.png)
 
 ![blog post details](screenshots/all_blog_posts.png)
 
