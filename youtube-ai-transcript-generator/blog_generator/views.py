@@ -1,5 +1,6 @@
 
 import time
+from google import genai
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
@@ -11,7 +12,6 @@ import json
 import yt_dlp
 import os
 import assemblyai as aai
-from transformers import pipeline, set_seed
 import httpx
 from .models import BlogPost
 
@@ -26,35 +26,35 @@ def generate_blog(request):
         try:
             data = json.loads(request.body)
             yt_link = data['link']
-        except (KeyError, json.JSONDecodeError):
-            return JsonResponse({'error': 'Invalid data sent'}, status=400)
+            user_prompt = data['prompt']
 
-        # get yt title
-        title = yt_title(yt_link)
+            title = yt_title(yt_link)
+            transcription = get_transcription(yt_link)
 
-        # get transcript
-        transcription = get_transcription(yt_link)
+            if not transcription:
+                return JsonResponse({'error': "Failed to get transcript"}, status=500)
 
-        if not transcription:
-            return JsonResponse({'error': "Failed to get transcript"}, status=500)
+            blog_content = generate_blog_from_transcription(transcription, user_prompt)
 
-        blog_content = generate_blog_from_transcription(transcription)
-        if not blog_content:
-            return JsonResponse({'error': "Failed to generate blog article"}, status=500)
+            if not blog_content:
+                return JsonResponse({'error': "Failed to generate blog article"}, status=500)
 
-        # save blog article to database
-        new_blog_article = BlogPost.objects.create(
-            user=request.user,
-            youtube_title=title,
-            youtube_link=yt_link,
-            generated_content=blog_content,
-        )
-        new_blog_article.save()
+            new_blog_article = BlogPost.objects.create(
+                user=request.user,
+                youtube_title=title,
+                youtube_link=yt_link,
+                generated_content=blog_content,
+            )
+            new_blog_article.save()
 
-        # return blog article as a response
-        return JsonResponse({'content': blog_content})
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=405)
+            return JsonResponse({'content': blog_content})
+
+        except Exception as e:
+            print("Error in generate_blog:", str(e))  # This prints error in terminal
+            return JsonResponse({'error': 'Internal Server Error'}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
 
 def yt_title(link):
     ydl_opts = {
@@ -84,19 +84,11 @@ def download_audio(link):
         else:
             raise Exception("Failed to download audio")
 
-# FUNCTION FOR EFFECTIVE TEXT GENERATION USING GPT-3.5-TURBO JUST ADD THE KEY AND ADD THE PROMPT FOR IT
-# def get_transcription(link):
-#     audio_file = download_audio(link)
-#     aai.settings.api_key = "YOUR API KEY"
 
-#     transcriber = aai.Transcriber()
-#     transcript = transcriber.transcribe(audio_file)
-
-#     return transcript.text
 
 def get_transcription(link):
     audio_file = download_audio(link)
-    aai.settings.api_key = "YOUR ASSEMBLY AI KEY"
+    aai.settings.api_key = settings.ASSEMBLYAI_API_KEY
 
     transcriber = aai.Transcriber()
     retries = 3
@@ -113,15 +105,23 @@ def get_transcription(link):
     return None
 
 
-def generate_blog_from_transcription(transcription):
-    generator = pipeline('text-generation', model='gpt2-medium')
-    set_seed(42)
 
-    prompt = f"Enhance this content: {transcription}\n\n"
-    generated = generator(prompt, max_length=1000, num_return_sequences=1)
-    blog_content = generated[0]['generated_text']
-    
-    return blog_content
+def generate_blog_from_transcription(transcription, user_prompt):
+
+    client = genai.Client(api_key=settings.GOOGLE_API_KEY)
+    prompt = f"""
+        {user_prompt}
+        here is the Transcript:
+        {transcription}
+    """
+
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt  # ✅ pass as plain string
+    )
+
+    return response.text
+
 
 
 def blog_list(request):

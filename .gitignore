@@ -33,3 +33,6 @@ db.sqlite3
 
 # VS Code
 .vscode/
+
+# .env file
+.env

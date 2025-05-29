@@ -50,14 +50,14 @@
 </head>
 <body class="flex flex-col min-h-scrren bg-gray-100 font-sans antialised">
     <!-- Navbar -->
-    <nav class="bg-violet-500 p-4 text-white flex justify-between">
+    <nav class="bg-blue-600 p-4 text-white flex justify-between">
         <div>
-            <h1 class="text-3xl font-bold">AI YouTube Transcript Generator</h1>
+            <h1 class="text-3xl font-bold text-white-600">AI YouTube Transcript Generator</h1>
         </div>
         <div>
-            <a href="#" class="text-white hover:underline mx-4">Welcome {{ user.username }}</a>
-            <a href="/blog-list" class="text-white hover:underline mx-4">Saved Posts</a>
-            <a href="/logout" class="text-white hover:underline">Logout</a>
+            <a href="#" class="text-white-600 hover:underline mx-4">Welcome {{ user.username }}</a>
+            <a href="/blog-list" class="text-white-600 hover:underline mx-4">Saved Posts</a>
+            <a href="/logout" class="text-white-600 hover:underline">Logout</a>
         </div>
     </nav>
 
@@ -71,7 +71,7 @@
 
             <!-- Introduction section -->
             <div class="text-center">
-                <h2 class="text-2xl font-semibold mb-4">Welcome to the AI YouTube Transcript Generator</h2>
+                <h2 class="text-2xl font-semibold mb-4 text-blue-600">Welcome to the AI YouTube Transcript Generator</h2>
                 <p class="text-gray-700">
                     Generate high-quality blog articles from YouTube videos using artificial intelligence.
                     Simply enter the link to the YouTube video below and let the AI create the content for you!
@@ -85,7 +85,13 @@
                 <h2 class="text-xl mb-4 font-semibold">Enter Youtube Video Link</h2>
                 <div class="flex space-x-4">
                     <input id="youtubeLink" type="url" placeholder="Paste Youtube Link..." class="flex-grow p-2 border border-blue-400 rounded-l-md">
-                    <button id="generateBlogButton" class="bg-violet-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-700 transition-colors">Generate</button>
+                    <!-- <button id="generateBlogButton" class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-700 transition-colors">Generate</button> -->
+                </div>
+
+                <h2 class="text-xl mb-4 mt-4 font-semibold">Provide Prompt</h2>
+                <div class="flex space-x-4">
+                    <input id="userPrompt" type="text" placeholder="What should i do...?" class="flex-grow p-2 border border-blue-400 rounded-l-md">
+                    <button id="generateBlogButton" class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-700 transition-colors">Generate</button>
                 </div>
             </div>
 
@@ -115,11 +121,13 @@
 
             const youtubeLink = document.getElementById('youtubeLink').value;
             const blogContent = document.getElementById('blogContent');
+            const userPrompt = document.getElementById('userPrompt').value;
             
             if(youtubeLink) {
                 document.getElementById('loading-circle').style.display = 'block';
                 
                 blogContent.innerHTML = ''; // Clear previous content
+                userPrompt.innerHTML = ''; // Clear previous prompt
 
                 const endpointUrl = '/generate-blog';
                 
@@ -129,7 +137,7 @@
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ link: youtubeLink })
+                        body: JSON.stringify({ link: youtubeLink, prompt: userPrompt })
                     });
 
                     const data = await response.json();
