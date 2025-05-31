@@ -17,10 +17,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
+from django.core.management import call_command
+
+# Temporary migration trigger view
+def run_migrations(request):
+    try:
+        call_command('migrate')
+        return HttpResponse("✅ Migrations applied successfully!")
+    except Exception as e:
+        return HttpResponse(f"❌ Error: {str(e)}")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('blog_generator.urls'))
+    path('', include('blog_generator.urls')),
+    path('run-migrations/', run_migrations)
 ]
 
 urlpatterns = urlpatterns+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
