@@ -1,5 +1,6 @@
 
 import time
+import base64
 from google import genai
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -14,6 +15,7 @@ import os
 import assemblyai as aai
 import httpx
 from .models import BlogPost
+
 
 # Create your views here.
 @login_required
@@ -54,6 +56,23 @@ def generate_blog(request):
             return JsonResponse({'error': 'Internal Server Error'}, status=500)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+def create_cookies_file():
+    cookies_b64 = os.getenv("YT_COOKIES_BASE64")
+    if not cookies_b64:
+        raise Exception("Environment variable YT_COOKIES_BASE64 is missing")
+
+    cookie_path = os.path.join(settings.BASE_DIR, 'cookies.txt')
+    with open(cookie_path, "wb") as f:
+        f.write(base64.b64decode(cookies_b64))
+    return cookie_path
+
+def remove_cookie_file(cookie_path):
+    try:
+        os.remove(cookie_path)
+    except Exception:
+        pass
 
 
 def yt_title(link):
