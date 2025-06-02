@@ -83,26 +83,98 @@ def yt_title(link):
         info_dict = ydl.extract_info(link, download=False)
         return info_dict.get('title', 'No title found')
 
+# def download_audio(link):
+#     ydl_opts = {
+#         'format': 'bestaudio/best',
+#         'outtmpl': os.path.join(settings.MEDIA_ROOT, '%(title)s.%(ext)s'),
+#         'cookiefile': os.path.join(settings.BASE_DIR, 'cookies.txt'),
+#         'postprocessors': [{
+#             'key': 'FFmpegExtractAudio',
+#             'preferredcodec': 'mp3',
+#             'preferredquality': '192',
+#         }],
+#     }
+#     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+#         info_dict = ydl.extract_info(link, download=True)
+#         audio_file = ydl.prepare_filename(info_dict)
+#         base, ext = os.path.splitext(audio_file)
+#         new_file = base + '.mp3'
+#         if os.path.exists(new_file):
+#             return new_file
+#         else:
+#             raise Exception("Failed to download audio")
+        
+
 def download_audio(link):
+    # --- Path for cookies.txt ---
+    # settings.BASE_DIR points to 'MINI_PROJECT/youtube-ai-transcript-generator/ai_blog_app/'
+    # We want to go up one level to 'youtube-ai-transcript-generator/'
+    # then into the 'config' folder, and finally to 'cookies.txt'.
+    
+    # Path to the 'youtube-ai-transcript-generator' directory (your project root)
+    project_root = os.path.dirname(settings.BASE_DIR)
+    
+    # Construct the full path to cookies.txt
+    cookies_file_path = os.path.join(project_root, 'config', 'cookies.txt')
+
+    # --- Crucial Check: Verify cookie file exists ---
+    if not os.path.exists(cookies_file_path):
+        raise FileNotFoundError(f"Cookies file not found at expected path: {cookies_file_path}")
+
+    # --- yt-dlp Options ---
     ydl_opts = {
         'format': 'bestaudio/best',
+        # Ensure MEDIA_ROOT is correctly configured in your Django settings for downloads
         'outtmpl': os.path.join(settings.MEDIA_ROOT, '%(title)s.%(ext)s'),
-        'cookiefile': os.path.join(settings.BASE_DIR, 'cookies.txt'),
+        
+        # This is the corrected path for your cookies file
+        'cookiefile': cookies_file_path, 
+        
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
+        'noplaylist': True,  # Ensures only single video is processed if a playlist URL is given
+        'nocheckcertificate': True, # Often helpful in cloud environments
+        'quiet': True,       # Suppress most console output from yt-dlp
+        'no_warnings': True, # Suppress warnings
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info_dict = ydl.extract_info(link, download=True)
-        audio_file = ydl.prepare_filename(info_dict)
-        base, ext = os.path.splitext(audio_file)
-        new_file = base + '.mp3'
-        if os.path.exists(new_file):
-            return new_file
-        else:
-            raise Exception("Failed to download audio")
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Create the MEDIA_ROOT directory if it doesn't exist
+            # This is good practice to ensure the download path is ready
+            os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+
+            info_dict = ydl.extract_info(link, download=True)
+            
+            # yt-dlp's prepare_filename is for the original download path, 
+            # not necessarily the final post-processed MP3.
+            # We can construct the final MP3 path more reliably.
+            # info_dict contains 'id' and 'title' which are useful for filenames
+            video_id = info_dict.get('id')
+            video_title_sanitized = ydl.sanitize_filename(info_dict.get('title', video_id)) # Sanitize for filename safety
+
+            # Construct the expected final MP3 file path
+            # Assuming 'outtmpl' creates a file like 'MEDIA_ROOT/Video Title.ext'
+            # and then postprocessor converts it to 'MEDIA_ROOT/Video Title.mp3'
+            final_audio_file_path = os.path.join(settings.MEDIA_ROOT, f"{video_title_sanitized}.mp3")
+
+            if os.path.exists(final_audio_file_path):
+                print(f"Successfully downloaded and processed audio to: {final_audio_file_path}")
+                return final_audio_file_path
+            else:
+                # If the file doesn't exist here, something went wrong with download or post-processing
+                raise Exception(f"Failed to find final audio file at {final_audio_file_path} after download.")
+
+    except yt_dlp.DownloadError as e:
+        print(f"yt-dlp Download Error: {e}")
+        # This is where you'll likely catch the 'Sign in to confirm' bot error
+        raise Exception(f"Video download failed: {e}") 
+    except Exception as e:
+        print(f"An unexpected error occurred during audio download: {e}")
+        raise Exception(f"An unexpected error occurred: {e}")
 
 
 
