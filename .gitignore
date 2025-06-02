@@ -36,3 +36,6 @@ db.sqlite3
 
 # .env file
 .env
+
+
+cookies.txt

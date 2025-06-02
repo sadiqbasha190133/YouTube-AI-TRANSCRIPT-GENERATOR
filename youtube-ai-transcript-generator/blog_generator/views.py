@@ -68,6 +68,7 @@ def download_audio(link):
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': os.path.join(settings.MEDIA_ROOT, '%(title)s.%(ext)s'),
+        'cookiefile': os.path.join(settings.BASE_DIR, 'cookies.txt'),
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
