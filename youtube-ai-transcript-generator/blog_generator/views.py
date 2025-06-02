@@ -58,120 +58,34 @@ def generate_blog(request):
 
 
 
-# def yt_title(link):
-#     ydl_opts = {
-#         'quiet': True,
-#     }
-#     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-#         info_dict = ydl.extract_info(link, download=False)
-#         return info_dict.get('title', 'No title found')
-
-# def download_audio(link):
-#     ydl_opts = {
-#         'format': 'bestaudio/best',
-#         'outtmpl': os.path.join(settings.MEDIA_ROOT, '%(title)s.%(ext)s'),
-#         'cookiefile': os.path.join(settings.BASE_DIR, 'cookies.txt'),
-#         'postprocessors': [{
-#             'key': 'FFmpegExtractAudio',
-#             'preferredcodec': 'mp3',
-#             'preferredquality': '192',
-#         }],
-#     }
-#     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-#         info_dict = ydl.extract_info(link, download=True)
-#         audio_file = ydl.prepare_filename(info_dict)
-#         base, ext = os.path.splitext(audio_file)
-#         new_file = base + '.mp3'
-#         if os.path.exists(new_file):
-#             return new_file
-#         else:
-#             raise Exception("Failed to download audio")
-
-
-
-
-
-# Calculate the project root once, as it's common for both functions
-# settings.BASE_DIR points to 'MINI_PROJECT/youtube-ai-transcript-generator/ai_blog_app/'
-# Moving up one directory gets us to 'MINI_PROJECT/youtube-ai-transcript-generator/'
-PROJECT_ROOT = os.path.dirname(settings.BASE_DIR)
-COOKIES_FILE_PATH = os.path.join(PROJECT_ROOT, 'config', 'cookies.txt')
-
-# Ensure the cookies file exists before any yt-dlp operation attempts to use it
-if not os.path.exists(COOKIES_FILE_PATH):
-    # This will raise an error early if the cookies file is missing,
-    # preventing silent failures later.
-    raise FileNotFoundError(
-        f"Cookies file not found at expected path: {COOKIES_FILE_PATH}. "
-        "Please ensure 'cookies.txt' is in 'MINI_PROJECT/youtube-ai-transcript-generator/config/'."
-    )
-
 def yt_title(link):
     ydl_opts = {
         'quiet': True,
-        'cookiefile': COOKIES_FILE_PATH, # Added cookie file for title extraction as well
-        'no_warnings': True, # Suppress warnings for cleaner output
     }
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(link, download=False)
-            return info_dict.get('title', 'No title found')
-    except yt_dlp.DownloadError as e:
-        # Catch specific yt-dlp errors, especially bot detection
-        print(f"Error fetching title: {e}")
-        return "Error: Could not retrieve title."
-    except Exception as e:
-        print(f"An unexpected error occurred while getting title: {e}")
-        return "Error: An unexpected issue occurred."
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(link, download=False)
+        return info_dict.get('title', 'No title found')
 
 def download_audio(link):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': os.path.join(settings.MEDIA_ROOT, '%(id)s.%(ext)s'), # Use %(id)s for unique filenames
-        'cookiefile': COOKIES_FILE_PATH, # Use the global cookies file path
+        'outtmpl': os.path.join(settings.MEDIA_ROOT, '%(title)s.%(ext)s'),
+        'cookiefile': os.path.join(settings.BASE_DIR, 'cookies.txt'),
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
-        'noplaylist': True,     # Process only a single video, not a playlist
-        'nocheckcertificate': True, # Useful in some deployment environments
-        'quiet': True,          # Suppress most console output
-        'no_warnings': True,    # Suppress warnings
     }
-
-    try:
-        # Ensure MEDIA_ROOT directory exists before downloading
-        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(link, download=True)
-            
-            # Use info_dict['id'] to construct the final filename,
-            # as it's guaranteed to be unique and consistent.
-            video_id = info_dict.get('id')
-            if not video_id:
-                raise Exception("Could not get video ID from YouTube info.")
-
-            # The postprocessor will convert the downloaded file to .mp3
-            # The outtmpl uses %(id)s, so the expected final file name will be <video_id>.mp3
-            expected_mp3_path = os.path.join(settings.MEDIA_ROOT, f"{video_id}.mp3")
-
-            if os.path.exists(expected_mp3_path):
-                return expected_mp3_path
-            else:
-                # If the file isn't found after download and post-processing, something went wrong.
-                raise Exception(f"Failed to find the expected audio file at {expected_mp3_path} after download and conversion.")
-    except yt_dlp.DownloadError as e:
-        print(f"yt-dlp Download Error: {e}")
-        # This is where the 'Sign in to confirm you're not a bot' error would manifest
-        raise Exception(f"Failed to download audio due to: {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred during audio download: {e}")
-        raise Exception(f"An unexpected error occurred during audio download: {e}")
-
-
-
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(link, download=True)
+        audio_file = ydl.prepare_filename(info_dict)
+        base, ext = os.path.splitext(audio_file)
+        new_file = base + '.mp3'
+        if os.path.exists(new_file):
+            return new_file
+        else:
+            raise Exception("Failed to download audio")
         
 
 def get_transcription(link):
