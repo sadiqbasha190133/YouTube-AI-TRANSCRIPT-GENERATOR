@@ -1,21 +1,21 @@
 # YouTube-AI-Transcript-Generator
 
-Youtube-AI-Transcript-generator is a project which takes an youtube url and generates the transcript of the given url video.
-In this project i have used gpt-2 models to transform the extracted text from the youtube video using url to generate a more readable format.
-We can use chatGPT API for generating the text into a better format and can change whatever format we want by changing the prompt.
-This will help greatly for the students to get the important points from the video by simply providing the url instead of listening the entire video and also where time matters.
+Youtube-AI-Transcript-generator is a project build using Django framework and integrated Google AI Studio API to generate text. This project has two inputs, a youtube url and a dynamic prompt to determine respective generative text. This application is usefull in the cases where we need to extract important information of a youtube video and re-transform it to our specific purposes.
 
 # Screenshots
 
 ![signup page](screenshots/sign_up_page.png)
 
-![home page](screenshots/home_page.png)
+![signin page](screenshots/sign_in.png)
 
-![text generated page](screenshots/text_generated_page.png)
+![Home page](screenshots/index_ui.png)
 
-![saved posts](screenshots/all_blog_posts.png)
+![text generation](screenshots/gen_blog_in_home.png)
 
-![blog post details](screenshots/all_blog_posts.png)
+![all blog post details](screenshots/all_blog_posts.png)
+
+![details of generated individual post](screenshots/blog_post_details.png)
+
 
 
 
