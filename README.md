@@ -4,7 +4,7 @@ Youtube-AI-Transcript-generator is a project build using Django framework and in
 
 # Screenshots
 
-![signup page](screenshots/sign_up_page.png)
+![signup page](screenshots/sign_up.png)
 
 ![signin page](screenshots/sign_in.png)
 
