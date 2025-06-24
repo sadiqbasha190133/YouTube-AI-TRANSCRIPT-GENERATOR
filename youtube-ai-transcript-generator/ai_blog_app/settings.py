@@ -28,7 +28,9 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(",")
+# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(",")
+
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -73,10 +75,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ai_blog_app.wsgi.application'
 
 
-
 DATABASES = {
-    'default': dj_database_url.config(default=os.environ['DATABASE_URL'])
+    'default': dj_database_url.config(default=config('DATABASE_URL'))
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators

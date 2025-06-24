@@ -109,21 +109,27 @@ def get_transcription(link):
 
 
 def generate_blog_from_transcription(transcription, user_prompt):
+    eMessage = "its seems something went wrong, please try again later"
+    try:
+        client = genai.Client(api_key=settings.GOOGLE_API_KEY)
+        prompt = f"""
+            {user_prompt}
+            here is the Transcript:
+            {transcription}
+        """
 
-    client = genai.Client(api_key=settings.GOOGLE_API_KEY)
-    prompt = f"""
-        {user_prompt}
-        here is the Transcript:
-        {transcription}
-    """
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt  # ✅ pass as plain string
+        )
+        return response.text if hasattr(response, 'text') and response.text else None
 
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt  # ✅ pass as plain string
-    )
-
-    return response.text
-
+    except ServiceUnavailable:
+        return "The model is currently overloaded. Please try again later."
+    except GoogleAPIError as e:
+        return f"{eMessage} \n Google API Error: {str(e)}"
+    except Exception as e:
+        return f"{eMessage} \n An unexpected error occurred: {str(e)}"
 
 
 def blog_list(request):
